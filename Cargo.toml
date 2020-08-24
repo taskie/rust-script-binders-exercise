@@ -1,0 +1,13 @@
+[package]
+name = "rust-script-binders-exercise"
+version = "0.1.0"
+authors = ["taskie <t@skie.jp>"]
+edition = "2018"
+publish = false
+
+[dependencies]
+pyo3 = "0.11.1"
+quick-js = "0.3.4"
+rand = "0.7.3"
+rand_xorshift = "0.2.0"
+rlua = "0.17.0"
