@@ -61,16 +61,28 @@ fn rust_prng_from_lua() -> rlua::Result<()> {
         }
     }
 
+    impl Drop for PRNG {
+        fn drop(&mut self) {
+            println!("dropped!")
+        }
+    }
+
     let lua = Lua::new();
     let result = lua.context(|ctx: Context| {
         let prng = ctx.create_function(|_, ()| Ok(PRNG::new()))?;
         let globals: Table = ctx.globals();
         globals.set("PRNG", prng)?;
-        let result: i32 = ctx.load("PRNG():gen()").eval()?;
+        ctx.load("prng = PRNG()").exec()?;
+        let result: i32 = ctx.load("prng:gen()").eval()?;
+        println!("Result: {}", result);
+        assert_eq!(1788228419, result);
+        let result: i32 = ctx.load("prng:gen()").eval()?;
+        ctx.load("prng = nil").exec()?;
         Ok(result)
     })?;
+    lua.gc_collect()?; // dropped!
     println!("Result: {}", result);
-    assert_eq!(1788228419, result);
+    assert_eq!(195908298, result);
     Ok(())
 }
 

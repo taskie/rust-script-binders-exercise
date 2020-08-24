@@ -53,7 +53,7 @@ fn rust_from_py() -> pyo3::PyResult<()> {
 fn rust_prng_from_py() -> pyo3::PyResult<()> {
     use pyo3::{
         prelude::{pyclass, pymethods},
-        types::{PyAny, PyDict, PyModule},
+        types::{PyDict, PyModule},
         PyObject, Python,
     };
     use rand::{Rng, SeedableRng};
@@ -79,23 +79,56 @@ fn rust_prng_from_py() -> pyo3::PyResult<()> {
         }
     }
 
+    impl Drop for PRNG {
+        fn drop(&mut self) {
+            println!("dropped!")
+        }
+    }
+
     let gil = Python::acquire_gil();
     let py = gil.python();
     let prng_cls = py.get_type::<PRNG>();
     let globals: &PyDict = PyModule::import(py, "__main__")?.dict();
-    globals.set_item("PRNG", prng_cls).unwrap();
+    globals.set_item("PRNG", prng_cls)?;
 
-    let result: &PyAny = py.eval("PRNG().gen()", Some(globals), None)?;
-    let result: i32 = result.extract()?;
+    py.run("prng = PRNG()", Some(globals), None)?;
+    let result: i32 = py.eval("prng.gen()", Some(globals), None)?.extract()?;
     println!("Result: {}", result);
     assert_eq!(1788228419, result);
+    let result: i32 = py.eval("prng.gen()", Some(globals), None)?.extract()?;
+    py.run("prng = None", Some(globals), None)?; // dropped!
+    println!("Result: {}", result);
+    assert_eq!(195908298, result);
     Ok(())
+}
+
+pub fn convert_err(e: pyo3::PyErr) -> Box<dyn Error> {
+    use pyo3::Python;
+    use std::fmt;
+
+    let gil = Python::acquire_gil();
+    let py = gil.python();
+    let dbg = format!("{:?}", &e);
+    e.print(py); // PyErr moved...
+
+    #[derive(Debug)]
+    struct SimpleError(String);
+
+    impl fmt::Display for SimpleError {
+        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> Result<(), fmt::Error> {
+            f.write_str(self.0.as_str())
+        }
+    }
+
+    impl Error for SimpleError {}
+
+    Box::new(SimpleError(dbg))
 }
 
 pub fn run() -> Result<(), Box<dyn Error>> {
     println!("# pyo3");
-    py_from_rust().unwrap();
-    rust_from_py().unwrap();
-    rust_prng_from_py().unwrap();
+    py_from_rust().map_err(convert_err)?;
+    rust_from_py().map_err(convert_err)?;
+    rust_prng_from_py().map_err(convert_err)?;
     Ok(())
 }
