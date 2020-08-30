@@ -103,24 +103,13 @@ fn rust_prng_from_py() -> pyo3::PyResult<()> {
 }
 
 pub fn convert_err(e: pyo3::PyErr) -> Box<dyn Error> {
+    use crate::util::SimpleError;
     use pyo3::Python;
-    use std::fmt;
 
     let gil = Python::acquire_gil();
     let py = gil.python();
     let dbg = format!("{:?}", &e);
     e.print(py); // PyErr moved...
-
-    #[derive(Debug)]
-    struct SimpleError(String);
-
-    impl fmt::Display for SimpleError {
-        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> Result<(), fmt::Error> {
-            f.write_str(self.0.as_str())
-        }
-    }
-
-    impl Error for SimpleError {}
 
     Box::new(SimpleError(dbg))
 }

@@ -4,6 +4,7 @@ mod pyo3;
 mod quick_js;
 mod rlua;
 mod rusty_v8;
+mod util;
 
 fn main() -> Result<(), Box<dyn Error>> {
     rlua::run()?;
