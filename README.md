@@ -1,5 +1,7 @@
 # rust-script-binders-exercise
 
+* [Rust に様々なスクリプト言語を組み込む - Möbius Flyer](https://blog.alprosys.com/2020/08/30/rust-script-binders-exercise/)
+
 ## Targets
 
 * [amethyst/rlua: High level Lua bindings to Rust](https://github.com/amethyst/rlua)
