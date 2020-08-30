@@ -9,7 +9,8 @@ pub fn prepare() {
 
 fn js_from_rust() -> Option<()> {
     use rusty_v8::{
-        self as v8, undefined, Context, ContextScope, Function, HandleScope, Integer, Isolate, Local, Object, Script,
+        self as v8, undefined, Context, ContextScope, Function, HandleScope, Integer, Isolate, Local, Object,
+        Primitive, Script, Value,
     };
     use std::convert::TryInto;
 
@@ -22,17 +23,16 @@ fn js_from_rust() -> Option<()> {
     let script: Local<Script> = Script::compile(scope, code, None)?;
     script.run(scope)?;
 
-    let global = context.global(scope);
+    let global: Local<Object> = context.global(scope);
     let foo_key = v8::String::new(scope, "foo")?;
-    let foo = global.get(scope, foo_key.into())?;
-
+    let foo: Local<Value> = global.get(scope, foo_key.into())?;
     let foo: Local<Object> = foo.to_object(scope)?;
     let foo: Local<Function> = foo.try_into().ok()?;
-    let undefined = undefined(scope).into();
+    let undefined: Local<Primitive> = undefined(scope);
     let x = Integer::new(scope, 5);
     let y = Integer::new(scope, 3);
-    let result = foo.call(scope, undefined, &[x.into(), y.into()])?;
-    let result: i32 = result.to_int32(scope)?.value() as i32;
+    let result = foo.call(scope, undefined.into(), &[x.into(), y.into()])?;
+    let result = result.to_int32(scope)?.value() as i32;
     println!("Result: {}", result);
     assert_eq!(8, result);
     Some(())
@@ -41,7 +41,7 @@ fn js_from_rust() -> Option<()> {
 fn rust_from_js() -> Option<()> {
     use rusty_v8::{
         self as v8, Context, ContextScope, Function, FunctionCallbackArguments, HandleScope, Integer, Isolate, Local,
-        ReturnValue, Script,
+        Object, ReturnValue, Script, Value,
     };
 
     fn foo(scope: &mut HandleScope, args: FunctionCallbackArguments, mut rv: ReturnValue) {
@@ -58,13 +58,13 @@ fn rust_from_js() -> Option<()> {
 
     let foo = Function::new(scope, foo)?;
 
-    let global = context.global(scope);
+    let global: Local<Object> = context.global(scope);
     let key = v8::String::new(scope, "foo")?;
     global.create_data_property(scope, key.into(), foo.into())?;
 
     let code = v8::String::new(scope, "foo(5, 3)")?;
     let script: Local<Script> = Script::compile(scope, code, None)?;
-    let result = script.run(scope)?;
+    let result: Local<Value> = script.run(scope)?;
     let result = result.to_int32(scope)?.value() as i32;
     println!("Result: {}", result);
     assert_eq!(8, result);

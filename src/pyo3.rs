@@ -4,11 +4,11 @@ use std::error::Error;
 fn py_from_rust() -> pyo3::PyResult<()> {
     use pyo3::{
         types::{PyAny, PyDict, PyModule},
-        Python,
+        GILGuard, Python,
     };
 
-    let gil = Python::acquire_gil();
-    let py = gil.python();
+    let gil: GILGuard = Python::acquire_gil();
+    let py: Python = gil.python();
     let globals: &PyDict = PyModule::import(py, "__main__")?.dict();
     py.run(
         r#"
@@ -30,11 +30,11 @@ fn rust_from_py() -> pyo3::PyResult<()> {
     use pyo3::{
         prelude::pyfunction,
         types::{PyAny, PyDict, PyModule},
-        wrap_pyfunction, Python,
+        wrap_pyfunction, GILGuard, Python,
     };
 
-    let gil = Python::acquire_gil();
-    let py = gil.python();
+    let gil: GILGuard = Python::acquire_gil();
+    let py: Python = gil.python();
     let globals: &PyDict = PyModule::import(py, "__main__")?.dict();
 
     #[pyfunction]
@@ -53,8 +53,8 @@ fn rust_from_py() -> pyo3::PyResult<()> {
 fn rust_prng_from_py() -> pyo3::PyResult<()> {
     use pyo3::{
         prelude::{pyclass, pymethods},
-        types::{PyDict, PyModule},
-        PyObject, Python,
+        types::{PyDict, PyModule, PyType},
+        GILGuard, PyObject, Python,
     };
     use rand::{Rng, SeedableRng};
     use rand_xorshift::XorShiftRng;
@@ -85,9 +85,9 @@ fn rust_prng_from_py() -> pyo3::PyResult<()> {
         }
     }
 
-    let gil = Python::acquire_gil();
-    let py = gil.python();
-    let prng_cls = py.get_type::<PRNG>();
+    let gil: GILGuard = Python::acquire_gil();
+    let py: Python = gil.python();
+    let prng_cls: &PyType = py.get_type::<PRNG>();
     let globals: &PyDict = PyModule::import(py, "__main__")?.dict();
     globals.set_item("PRNG", prng_cls)?;
 

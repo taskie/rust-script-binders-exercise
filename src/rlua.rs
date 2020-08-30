@@ -18,11 +18,11 @@ fn lua_from_rust() -> rlua::Result<()> {
 }
 
 fn rust_from_lua() -> rlua::Result<()> {
-    use rlua::{Context, Lua, Table};
+    use rlua::{Context, Function, Lua, Table};
 
     let lua = Lua::new();
     let result = lua.context(|ctx: Context| {
-        let foo = ctx.create_function(|_ctx: Context, (x, y): (i32, i32)| Ok(x + y))?;
+        let foo: Function = ctx.create_function(|_ctx: Context, (x, y): (i32, i32)| Ok(x + y))?;
         let globals: Table = ctx.globals();
         globals.set("foo", foo)?;
         let result: i32 = ctx.load("foo(5, 3)").eval()?;
@@ -36,7 +36,7 @@ fn rust_from_lua() -> rlua::Result<()> {
 fn rust_prng_from_lua() -> rlua::Result<()> {
     use rand::{Rng, SeedableRng};
     use rand_xorshift::XorShiftRng;
-    use rlua::{Context, Lua, Table, UserData, UserDataMethods};
+    use rlua::{Context, Function, Lua, Table, UserData, UserDataMethods};
     use std::cell::RefCell;
 
     struct PRNG {
@@ -69,7 +69,7 @@ fn rust_prng_from_lua() -> rlua::Result<()> {
 
     let lua = Lua::new();
     let result = lua.context(|ctx: Context| {
-        let prng = ctx.create_function(|_, ()| Ok(PRNG::new()))?;
+        let prng: Function = ctx.create_function(|_, ()| Ok(PRNG::new()))?;
         let globals: Table = ctx.globals();
         globals.set("PRNG", prng)?;
         ctx.load("prng = PRNG()").exec()?;
