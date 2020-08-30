@@ -9,7 +9,7 @@ mod util;
 fn main() -> Result<(), Box<dyn Error>> {
     rlua::run()?;
     pyo3::run()?;
-    quick_js::run()?;
     rusty_v8::run()?;
+    quick_js::run()?;
     Ok(())
 }
